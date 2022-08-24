@@ -766,6 +766,15 @@ test_expect_success 'detect bogus diffFilter output' '
 	force_color test_must_fail git add -p <y
 '
 
+test_expect_success 'gracefully fail to parse colored hunk header' '
+	git reset --hard &&
+
+	echo content >test &&
+	test_config interactive.diffFilter "sed s/@@/XX/g" &&
+	printf y >y &&
+	force_color git add -p <y
+'
+
 test_expect_success 'diff.algorithm is passed to `git diff-files`' '
 	git reset --hard &&
 

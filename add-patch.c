@@ -357,16 +357,13 @@ static int parse_hunk_header(struct add_p_state *s, struct hunk *hunk)
 	eol = memchr(line, '\n', s->colored.len - hunk->colored_start);
 	if (!eol)
 		eol = s->colored.buf + s->colored.len;
-	p = memmem(line, eol - line, "@@ -", 4);
-	if (!p)
-		return error(_("could not parse colored hunk header '%.*s'"),
-			     (int)(eol - line), line);
-	p = memmem(p + 4, eol - p - 4, " @@", 3);
-	if (!p)
-		return error(_("could not parse colored hunk header '%.*s'"),
-			     (int)(eol - line), line);
 	hunk->colored_start = eol - s->colored.buf + (*eol == '\n');
-	header->colored_extra_start = p + 3 - s->colored.buf;
+	p = memmem(line, eol - line, "@@ -", 4);
+	if (p && (p = memmem(p + 4, eol - p - 4, " @@", 3)))
+		header->colored_extra_start = p + 3 - s->colored.buf;
+	else
+		/* could not parse colored hunk header, showing nothing */
+		header->colored_extra_start = hunk->colored_start;
 	header->colored_extra_end = hunk->colored_start;
 
 	return 0;
