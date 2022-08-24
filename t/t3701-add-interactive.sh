@@ -761,7 +761,7 @@ test_expect_success 'detect bogus diffFilter output' '
 	git reset --hard &&
 
 	echo content >test &&
-	test_config interactive.diffFilter "sed 1d" &&
+	test_config interactive.diffFilter "sed q" &&
 	printf y >y &&
 	force_color test_must_fail git add -p <y
 '
