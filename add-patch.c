@@ -8,6 +8,7 @@
 #include "diff.h"
 #include "compat/terminal.h"
 #include "prompt.h"
+#include "utf8.h"
 
 enum prompt_mode_type {
 	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_ADDITION, PROMPT_HUNK,
@@ -363,7 +364,7 @@ static int parse_hunk_header(struct add_p_state *s, struct hunk *hunk)
 		header->colored_extra_start = p + 3 - s->colored.buf;
 	else
 		/* could not parse colored hunk header, showing nothing */
-		header->colored_extra_start = hunk->colored_start;
+		header->colored_extra_start = line - s->colored.buf;
 	header->colored_extra_end = hunk->colored_start;
 
 	return 0;
@@ -649,6 +650,7 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		size_t len;
 		unsigned long old_offset = header->old_offset;
 		unsigned long new_offset = header->new_offset;
+		int needs_extra_space = 0;
 
 		if (!colored) {
 			p = s->plain.buf + header->extra_start;
@@ -658,6 +660,8 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 			p = s->colored.buf + header->colored_extra_start;
 			len = header->colored_extra_end
 				- header->colored_extra_start;
+			if (utf8_strnwidth(p, len, 1 /* skip ANSI */) > 0)
+				needs_extra_space = 1;
 		}
 
 		if (s->mode->is_reverse)
@@ -673,6 +677,8 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 			strbuf_addf(out, ",%lu", header->new_count);
 		strbuf_addstr(out, " @@");
 
+		if (needs_extra_space)
+			strbuf_addch(out, ' ');
 		if (len)
 			strbuf_add(out, p, len);
 		else if (colored)

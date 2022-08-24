@@ -772,7 +772,8 @@ test_expect_success 'gracefully fail to parse colored hunk header' '
 	echo content >test &&
 	test_config interactive.diffFilter "sed s/@@/XX/g" &&
 	printf y >y &&
-	force_color git add -p <y
+	force_color git add -p >output 2>&1 <y &&
+	grep XX output
 '
 
 test_expect_success 'diff.algorithm is passed to `git diff-files`' '
